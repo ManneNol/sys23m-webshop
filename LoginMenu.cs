@@ -1,6 +1,6 @@
 namespace sys23m_webshop;
 
-public class LoginMenu
+public static class LoginMenu
 {
     public static void Register()
     {
@@ -31,45 +31,37 @@ public class LoginMenu
         File.AppendAllText("users.csv", $"{username},{password},{Role.Customer}\n");
     }
 
-    public static IUser Login()
+    public static IUser? Login()
     {
         string[] users = File.ReadAllLines("users.csv");
-        while (true)
+        string input = Utils.AskForInput("Username: ");
+        foreach (string line in users)
         {
-            string input = Utils.AskForInput("Username: ");
-            foreach (string line in users)
+            string[] info = line.Split(',');
+            string name = info[0];
+            string pass = info[1];
+
+            if (name.Equals(input))
             {
-                string[] info = line.Split(',');
-                string name = info[0];
-
-                if (name.Equals(input))
+                input = Utils.AskForInput("Password: ");
+                if (pass.Equals(input))
                 {
-                    input = Utils.AskForInput("Password: ");
-
-                    string pass = info[1];
-
-                    if (pass.Equals(input))
+                    if (Enum.TryParse(info[2], out Role role))
                     {
-                        if (Enum.TryParse(info[2], out Role role))
+                        switch (role)
                         {
-                            switch (role)
-                            {
-                                case Role.Customer:
-                                    return new Customer(name, LoadCart(name));
-                                case Role.Admin:
-                                    return new Admin(name);
-                            }
-                        }
-                        else
-                        {
-                            throw new Exception();
+                            case Role.Customer:
+                                return new Customer(name, LoadCart(name));
+                            case Role.Admin:
+                                return new Admin(name);
                         }
                     }
                 }
             }
-
-            Console.WriteLine("No such user exists");
         }
+
+        Console.WriteLine("No such user exists");
+        return null;
     }
 
     private static List<Product> LoadCart(string user)
@@ -80,7 +72,6 @@ public class LoginMenu
         {
             cart.Add(new Product(item));
         }
-
         return cart;
     }
 }
